@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:w9_practice_firebase/ui/utils/format_duration.dart';
 
 import '../../../model/songs/song.dart';
 
@@ -23,8 +24,8 @@ class SongTile extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(15)
         ),
-        child: SizedBox(
-          height: 70,
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
           child: ListTile(
             onTap: onTap,
             leading: CircleAvatar(
@@ -32,6 +33,7 @@ class SongTile extends StatelessWidget {
               backgroundImage: NetworkImage(song.imageUrl),
             ),
             title: Text(song.title),
+            subtitle: Text("${formatDuration(song.duration)} min"),
             trailing: Text(
               isPlaying ? "Playing" : "",
               style: TextStyle(color: Colors.amber),
