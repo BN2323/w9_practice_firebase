@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:w9_practice_firebase/data/repositories/artists/artist_repository.dart';
+import 'package:w9_practice_firebase/model/artists/artist.dart';
+import 'package:w9_practice_firebase/model/songs/rich_song.dart';
 import '../../../../data/repositories/songs/song_repository.dart';
 import '../../../states/player_state.dart';
 import '../../../../model/songs/song.dart';
@@ -6,11 +9,12 @@ import '../../../utils/async_value.dart';
 
 class LibraryViewModel extends ChangeNotifier {
   final SongRepository songRepository;
+  final ArtistRepository artistRepository;
   final PlayerState playerState;
 
-  AsyncValue<List<Song>> songsValue = AsyncValue.loading();
+  AsyncValue<List<RichSong>> songsValue = AsyncValue.loading();
 
-  LibraryViewModel({required this.songRepository, required this.playerState}) {
+  LibraryViewModel({required this.songRepository, required this.artistRepository, required this.playerState}) {
     playerState.addListener(notifyListeners);
 
     // init
@@ -35,17 +39,31 @@ class LibraryViewModel extends ChangeNotifier {
     try {
       // 2- Fetch is successfull
       List<Song> songs = await songRepository.fetchSongs();
-      songsValue = AsyncValue.success(songs);
+      List<Artist> artists = await artistRepository.fetchArtists();
+      
+      final richSongs = songs.map((song) {
+        final artist = artists.firstWhere((a) => a.id == song.artistId);
+        return RichSong(
+          id: song.id,
+          title: song.title,
+          duration: song.duration,
+          artistId: song.artistId,
+          artistName: artist.name,
+          artistGenre: artist.genre,
+          imageUrl: song.imageUrl,
+        );
+      }).toList();
+
+      songsValue = AsyncValue.success(richSongs);
     } catch (e) {
       // 3- Fetch is unsucessfull
       songsValue = AsyncValue.error(e);
     }
-     notifyListeners();
-
+    notifyListeners();
   }
 
-  bool isSongPlaying(Song song) => playerState.currentSong == song;
+  bool isSongPlaying(RichSong song) => playerState.currentSong == song;
 
-  void start(Song song) => playerState.start(song);
-  void stop(Song song) => playerState.stop();
+  void start(RichSong song) => playerState.start(song);
+  void stop(RichSong song) => playerState.stop();
 }
