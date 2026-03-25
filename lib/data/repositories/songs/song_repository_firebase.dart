@@ -7,7 +7,7 @@ import '../../dtos/song_dto.dart';
 import 'song_repository.dart';
 
 class SongRepositoryFirebase extends SongRepository {
-  final Uri songsUri = Uri.https('YOUR FIREBASE URL', '/songs.json');
+  final Uri songsUri = Uri.https('week-8-34ffb-default-rtdb.asia-southeast1.firebasedatabase.app', '/songs.json');
 
   @override
   Future<List<Song>> fetchSongs() async {
@@ -15,8 +15,19 @@ class SongRepositoryFirebase extends SongRepository {
 
     if (response.statusCode == 200) {
       // 1 - Send the retrieved list of songs
-      List<dynamic> songJson = json.decode(response.body);
-      return songJson.map((item) => SongDto.fromJson(item)).toList();
+      final Map<String, dynamic>? songsMap =
+          json.decode(response.body) as Map<String, dynamic>?;
+
+      if (songsMap == null) return [];
+
+      return songsMap.entries.map((entry) {
+        final String id = entry.key;
+        final Map<String, dynamic> data = Map<String, dynamic>.from(
+          entry.value,
+        );
+        return SongDto.fromJson(id, data);
+      }).toList();
+
     } else {
       // 2- Throw expcetion if any issue
       throw Exception('Failed to load posts');
@@ -24,5 +35,12 @@ class SongRepositoryFirebase extends SongRepository {
   }
 
   @override
-  Future<Song?> fetchSongById(String id) async {}
+  Future<Song?> fetchSongById(String id) async {
+    final songs = await fetchSongs();
+    try {
+      return songs.firstWhere((song) => song.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
 }
